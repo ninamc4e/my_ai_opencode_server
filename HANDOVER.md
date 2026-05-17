@@ -139,22 +139,67 @@ curl.exe -s -X POST https://bot-29-nx0w.onrender.com/mcp -H "Content-Type: appli
 
 ## Что было сделано в этой сессии (18.05.2026)
 
-### Sync System — триединство (ноутбук / другой ПК / сервер)
-- Создана полная архитектура синхронизации трёх узлов через GitHub
-- Создан `telegram-hub/sync.ps1` — PowerShell-скрипт (для Windows), клонирует репозиторий, мержит HANDOVER.md, пушит
-- Создан `telegram-hub/sync.sh` — Bash-скрипт (для Linux/serber), аналогичная логика
-- Создан `telegram-hub/sync.json` — конфиг (repository, branch, node_name, push_after_task)
-- Создан `USER.md` — профиль пользователя (имя, модель, предпочтения, контакты, настройки нод)
-- Обновлён `AGENTS.md`:
-  - Добавлена команда `/sync`
-  - Добавлен раздел Sync System с архитектурой и протоколом
-  - Добавлены правила auto-sync (при старте/после задачи/при завершении)
-  - Обновлено правило пуша: sync-файлы можно пушить автоматически, остальное — только с разрешения
+### 1. AGENTS.md — полная переработка (главный итог сессии)
+AGENTS.md полностью переписан как единый центр правил для всех трёх узлов.
+Новая структура:
+- **Неизменяемые принципы** — секреты, push, совместимость
+- **Триединство** — архитектура трёх узлов, таблица ролей
+- **Файлы и назначение** — все синхронизируемые файлы с политикой конфликтов
+- **Жизненный цикл сессии** — пошаговые протоколы для каждого узла:
+  - 4.1 Определение платформы (powershell vs sh)
+  - 4.2 Старт сессии (контекст → sync → проверка архива → уведомление → ответ)
+  - 4.3 Работа в сессии (auto-sync, notify, /sync)
+  - 4.4 Завершение сессии (резюме → HANDOVER.md → уведомление → sync)
+  - 4.5 Миграция на другой ПК (cloud-migrate.ps1)
+  - 4.6 Восстановление на новом ПК (restore/bootstrap/unseal)
+- **Команды** — полная таблица с алиасами
+- **Sync System** — алгоритм merge HANDOVER.md, auto-sync
+- **Telegram-уведомления** — конфиги, скрипты, кодировка, /tg
+- **Backup / Restore** — детальные описания скриптов и процессов
+- **MCP / Dynamic Agents** — полная справка
+- **Приложение** — актуальные ссылки и ID
 
-### Render — alpine-experiment OOM тест
+### 2. Sync System (создана с нуля)
+- `telegram-hub/sync.ps1` — движок синхронизации (PowerShell 5.1, для Windows)
+- `telegram-hub/sync.sh` — движок синхронизации (sh для Alpine/Linux)
+- `telegram-hub/sync.json` — конфиг (repo, branch, node_name, push_after_task)
+- `USER.md` — профиль пользователя (имя, модель, предпочтения)
+- Авто-синхронизация: при старте, после каждой задачи, при завершении
+- Протокол: clone → merge HANDOVER.md (append-only) → push
+
+### 3. Архив (бэкап) — обновлён
+- Создан свежий архив `my_best_work_2026-05-18_014728.zip`
+- **Render FileVault:** file_id=1aa908bf550a45109a7e9861f900d032 (папка "migrate")
+- **GitHub:** https://github.com/alexsmy/test_opencode/migrate/ commit 2d61e29
+- Предыдущий archive (17.05) заменён
+
+### 4. Render — alpine-experiment OOM тест
 - Установлена `OPENCODE_MEMORY_LIMIT=0.4` в Render Dashboard
-- Запушен коммит в `alpine-experiment` с заметкой о переменной
+- Запушен коммит в `alpine-experiment`
 - Серверный брат успешно стартовал на Alpine, создал time.html, отправил код в Telegram
+- Серверный брат не синхронизировался с GitHub на старте (исправлено в AGENTS.md)
+
+### 5. Исправления
+- **Старт на сервере:** теперь сначала sync.sh (pull), потом проверка архива
+- **Завершение на сервере:** теперь sync.sh + notify.sh (без PowerShell)
+- **Правило пуша:** HANDOVER.md/CONTEXT.md/USER.md — автоматически, остальное — с разрешения
+
+### Изменённые файлы
+- `AGENTS.md` — полная переработка (новая структура, 11 разделов)
+- `telegram-hub/sync.ps1` — новый файл
+- `telegram-hub/sync.sh` — новый файл
+- `telegram-hub/sync.json` — новый файл
+- `USER.md` — новый файл
+- `HANDOVER.md` — обновлён
+- `CONTEXT.md` — обновлён
+- `my_ai_opencode_server/Dockerfile` — добавлена заметка о OPENCODE_MEMORY_LIMIT
+
+### Текущее состояние
+- AGENTS.md — полная документация, читается при старте любой сессии
+- Sync System — работает на Windows (проверено) и Linux
+- Архив на двух носителях: Render FileVault + GitHub
+- Серверный брат на Alpine, OPENCODE_MEMORY_LIMIT=0.4, работает стабильно
+- Триединство: notebook ↔ GitHub ↔ server — настроено
 
 ## Полезные ссылки
 - GitHub: https://github.com/alexsmy/bot_29/tree/mcp_agent_import

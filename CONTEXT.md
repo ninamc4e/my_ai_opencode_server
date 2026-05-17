@@ -34,8 +34,15 @@ my_best_work/
 │   ├── .gitignore          # Защита от коммита secrets
 │   └── skills/
 │       └── code-reviewer.json  # Пример навыка
-├── telegram-hub/            # Telegram: односторонние уведомления (AI → Пользователь)
+├── telegram-hub/            # Telegram: уведомления + синхронизация
 │   ├── notify.ps1          # Скрипт отправки (server-режим через Render / local-режим браузер)
+│   ├── notify.sh           # Linux-версия notify (для сервера Render, Alpine)
+│   ├── session-start.ps1   # Уведомление о старте сессии (Windows)
+│   ├── session-end.ps1     # Уведомление о завершении сессии (Windows)
+│   ├── sync.ps1            # Движок синхронизации (PowerShell 5.1, для Windows)
+│   ├── sync.sh             # Движок синхронизации (sh, для Linux/Render)
+│   ├── sync.json           # Конфиг sync: repo, branch, node_name, push_after_task
+│   ├── cloud-migrate.ps1   # Миграция: backup + FileVault + GitHub
 │   ├── telegram-route.json # Маршрутизация: mode, endpoint, secret_env, формат
 │   ├── telegram-config.json # Токен бота + chat_id (только для local-режима)
 │   └── telegram-notify.json # Настройки: enabled, level (all/errors)
@@ -138,12 +145,17 @@ powershell -File C:\Users\alexs\.opencode\my_best_work\telegram-hub\notify.ps1 -
 
 ## Sync System — триединство (18.05.2026)
 - Три узла синхронизируются через GitHub: notebook, other-pc, server
-- `telegram-hub/sync.ps1` (PowerShell) / `sync.sh` (Bash) — движки синхронизации
-- `telegram-hub/sync.json` — конфиг (node, branch, push_after_task)
+- `telegram-hub/sync.ps1` (PowerShell) / `sync.sh` (sh) — движки синхронизации
+- `telegram-hub/sync.json` — конфиг (node_name, branch, push_after_task)
 - `USER.md` — профиль пользователя (читается при старте, персонализация)
 - Команда `/sync` — принудительная синхронизация
 - Auto-sync: после каждой задачи, при старте и завершении сессии
-- Пуш HANDOVER.md / CONTEXT.md / USER.md — автоматический (разрешён AGENTS.md)
+- Пуш HANDOVER.md / CONTEXT.md / USER.md — автоматический, остальное — с разрешения
+- Алгоритм merge HANDOVER.md: append-only (новые строки дописываются)
+- Определение платформы: `powershell` есть → Windows, `sh` есть → Linux
+
+### Изменённые файлы
+- `telegram-hub/sync.ps1` — движок синхронизации (PowerShell 5.1)
 
 ## Планы на будущее
 - Pull Request через gh (GitHub CLI)
