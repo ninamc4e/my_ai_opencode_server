@@ -1,10 +1,17 @@
-FROM ghcr.io/anomalyco/opencode:latest
+FROM node:20-bookworm-slim
 
+# Устанавливаем opencode и git
+RUN npm install -g opencode-ai && \
+    apt-get update -qq && apt-get install -y -qq git && \
+    rm -rf /var/lib/apt/lists/*
+
+# Конфигурация
 COPY opencode.json /etc/opencode/config.json
 
 ENTRYPOINT []
 
-CMD ["sh", "-c", "\
+# Старт: клонируем/обновляем проект → запускаем opencode serve
+CMD ["/bin/sh", "-c", "\
 git config --global user.name 'opencode-server' && \
 git config --global user.email 'server@opencode' && \
 if [ -n \"$GITHUB_TOKEN\" ]; then \
@@ -16,4 +23,4 @@ else \
 fi && \
 cd /workspace && \
 export OPENCODE_CONFIG=/etc/opencode/config.json && \
-opencode serve --hostname 0.0.0.0 --port $PORT"]
+opencode serve --hostname 0.0.0.0 --port ${PORT:-10000}"]
