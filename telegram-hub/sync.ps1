@@ -1,4 +1,4 @@
-param(
+﻿param(
     [string]$RepoUrl = "https://github.com/ninamc4e/my_ai_opencode_server.git",
     [string]$Branch = "main",
     [switch]$Verbose,
@@ -99,7 +99,8 @@ foreach ($file in @("CONTEXT.md", "USER.md")) {
 # 5. Push if changed
 if ($dirty) {
     Push-Location $syncDir
-    $commitMsg = "sync [$nodeName] $(Get-Date -Format 'yyyy-MM-dd HH:mm')"
+    $now = Get-Date -Format "yyyy-MM-dd HH:mm"
+    $commitMsg = "sync [$nodeName] $now"
     Invoke-Git @("add", "-A") | Out-Null
     Invoke-Git @("diff", "--cached", "--quiet") | Out-Null
     $hasDiff = $LASTEXITCODE
@@ -119,6 +120,51 @@ if ($dirty) {
 } else {
     if (-not $Quiet) { Write-Host "Already in sync" -ForegroundColor Green }
 }
+
+# 5b. Show codeword on any completion
+if (-not $Quiet) {
+    $now = Get-Date -Format "yyyy-MM-dd HH:mm"
+    Write-Host "Триедино Синхронизирован" -ForegroundColor Green
+    Write-Host "Дата: $now" -ForegroundColor Green
+}
+
+# 7. Check test_opencode archive for newer AGENTS.md/sync.sh
+if (-not $Quiet) { Write-Host "Checking archive for updates..." -ForegroundColor Cyan }
+$tcDir = Join-Path $env:TEMP "opencode_tc_$(Get-Random)"
+$null = git clone --depth 1 "https://github.com/alexsmy/test_opencode.git" $tcDir 2>$null
+if ($LASTEXITCODE -eq 0) {
+    $latest = Get-ChildItem "$tcDir\migrate\*.zip" | Sort-Object Name -Descending | Select-Object -First 1
+    if ($latest -and (Test-Path $latest.FullName)) {
+        $extractDir = Join-Path $env:TEMP "opencode_extract_$(Get-Random)"
+        $null = & "unzip" "-o" $latest.FullName "AGENTS.md" "telegram-hub/sync.ps1" "-d" $extractDir 2>$null
+        if ($LASTEXITCODE -eq 0) {
+            # Update AGENTS.md if different
+            $newAgents = Join-Path $extractDir "AGENTS.md"
+            $currentAgents = Join-Path $srcDir "AGENTS.md"
+            if ((Test-Path $newAgents) -and (Test-Path $currentAgents)) {
+                $newContent = Get-Content $newAgents -Raw
+                $curContent = Get-Content $currentAgents -Raw
+                if ($newContent -ne $curContent) {
+                    Copy-Item $newAgents $currentAgents -Force
+                    if (-not $Quiet) { Write-Host "  AGENTS.md updated from archive" -ForegroundColor Yellow }
+                }
+            }
+            # Update sync.ps1 if different
+            $newSync = Join-Path $extractDir "telegram-hub\sync.ps1"
+            $currentSync = Join-Path $srcDir "telegram-hub\sync.ps1"
+            if ((Test-Path $newSync) -and (Test-Path $currentSync)) {
+                $newContent = Get-Content $newSync -Raw
+                $curContent = Get-Content $currentSync -Raw
+                if ($newContent -ne $curContent) {
+                    Copy-Item $newSync $currentSync -Force
+                    if (-not $Quiet) { Write-Host "  sync.ps1 updated from archive" -ForegroundColor Yellow }
+                }
+            }
+        }
+        Remove-Item $extractDir -Recurse -Force -ErrorAction SilentlyContinue
+    }
+}
+Remove-Item $tcDir -Recurse -Force -ErrorAction SilentlyContinue
 
 # 6. Cleanup
 Remove-Item $syncDir -Recurse -Force -ErrorAction SilentlyContinue
