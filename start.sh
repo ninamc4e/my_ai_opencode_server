@@ -1,17 +1,24 @@
 #!/bin/bash
 set -e
 
-# Pull последней версии из GitHub (HANDOVER.md, CONTEXT.md и т.д.)
-cd /workspace
-
-# Настроим git для пуша
+# Настроим git
 git config --global user.name "opencode-server"
 git config --global user.email "server@opencode"
 
-# Клонируем или пуллим
-if [ -d .git ]; then
-  git pull origin main 2>/dev/null || echo "git pull failed, continuing"
+# Клонируем проект (если ещё не склонирован)
+if [ ! -d /workspace/.git ]; then
+  git clone https://github.com/ninamc4e/my_ai_opencode_server.git /workspace
 fi
+
+cd /workspace
+
+# Если есть GITHUB_TOKEN — настраиваем аутентификацию для push
+if [ -n "$GITHUB_TOKEN" ]; then
+  git remote set-url origin https://ninamc4e:$GITHUB_TOKEN@github.com/ninamc4e/my_ai_opencode_server.git 2>/dev/null
+fi
+
+# Подтягиваем последние изменения (HANDOVER.md и т.д.)
+git pull origin main 2>/dev/null || echo "git pull skipped"
 
 # Устанавливаем конфиг
 export OPENCODE_CONFIG=/etc/opencode/config.json
