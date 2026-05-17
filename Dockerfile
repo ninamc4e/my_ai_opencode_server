@@ -28,4 +28,4 @@ echo 'Repository ready.' && \
 cd /workspace && \
 export OPENCODE_CONFIG=/etc/opencode/config.json && \
 echo 'Starting opencode serve...' && \
-exec opencode serve --hostname 0.0.0.0 --port ${PORT:-10000} --log-level DEBUG --print-logs"]
+exec opencode serve --hostname 0.0.0.0 --port ${PORT:-10000}"]
