@@ -611,11 +611,11 @@ async def tool_name(param1: str, param2: int = 0) -> str:
 ## 11. Приложение: актуальные ссылки и ID
 
 ### Последний backup
-- **file_id:** 1aa908bf550a45109a7e9861f900d032
+- **file_id:** 3ebec6d8e142472fa8d457913ecc433e
 - **дата:** 2026-05-18
-- **url:** https://bot-29-nx0w.onrender.com/files/open/1aa908bf550a45109a7e9861f900d032
+- **url:** https://bot-29-nx0w.onrender.com/files/open/3ebec6d8e142472fa8d457913ecc433e
 - **GitHub:** https://github.com/alexsmy/test_opencode/tree/main/migrate
-- **last_github_commit:** 2d61e29
+- **last_github_commit:** 53cf353
 
 ### Render сервер
 - **URL:** https://bot-29-nx0w.onrender.com
