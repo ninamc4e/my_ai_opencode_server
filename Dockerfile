@@ -23,4 +23,4 @@ else \
 fi && \
 cd /workspace && \
 export OPENCODE_CONFIG=/etc/opencode/config.json && \
-opencode web --hostname 0.0.0.0 --port ${PORT:-10000}"]
+opencode serve --hostname 0.0.0.0 --port ${PORT:-10000}"]
