@@ -1,0 +1,9 @@
+{
+  "repo": "ninamc4e/my_ai_opencode_server",
+  "branch": "main",
+  "files": ["HANDOVER.md", "CONTEXT.md", "USER.md"],
+  "node_name": "notebook",
+  "push_after_task": true,
+  "auto_sync_on_start": true,
+  "auto_sync_on_end": true
+}
