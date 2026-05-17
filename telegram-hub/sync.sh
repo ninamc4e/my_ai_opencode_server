@@ -97,15 +97,56 @@ if [ "$DIRTY" = "1" ]; then
         git push origin "$BRANCH" >/dev/null 2>&1
         if [ $? -eq 0 ]; then
             [ "$VERBOSE" = "1" ] && echo "Sync OK: pushed to $BRANCH"
+            echo "Триедино Синхронизирован"
+            echo "Дата: $(date '+%Y-%m-%d %H:%M')"
         else
             echo "ERROR: push failed (check auth)"
         fi
     else
         [ "$VERBOSE" = "1" ] && echo "No changes to push"
+        echo "Триедино Синхронизирован"
+        echo "Дата: $(date '+%Y-%m-%d %H:%M')"
     fi
 else
     [ "$VERBOSE" = "1" ] && echo "Already in sync"
+    echo "Триедино Синхронизирован"
+    echo "Дата: $(date '+%Y-%m-%d %H:%M')"
 fi
+
+# 7. Check test_opencode archive for newer AGENTS.md/sync.sh
+[ "$VERBOSE" = "1" ] && echo "Checking archive for updates..."
+TCLONE_DIR=$(mktemp -d /tmp/opencode_tc.XXXXXX)
+git clone --depth 1 https://github.com/alexsmy/test_opencode.git "$TCLONE_DIR" >/dev/null 2>&1
+if [ $? -eq 0 ]; then
+    # Find latest archive by name (sorted: YYYY-MM-DD_HHMMSS)
+    LATEST=$(ls "$TCLONE_DIR/migrate/"*.zip 2>/dev/null | sort -r | head -1)
+    if [ -n "$LATEST" ] && [ -f "$LATEST" ]; then
+        EXTRACT_DIR=$(mktemp -d /tmp/opencode_extract.XXXXXX)
+        unzip -o "$LATEST" "AGENTS.md" "telegram-hub/sync.sh" -d "$EXTRACT_DIR" >/dev/null 2>&1
+
+        # Update AGENTS.md if newer
+        NEW_AGENTS="$EXTRACT_DIR/AGENTS.md"
+        if [ -f "$NEW_AGENTS" ] && [ -f "$PROJECT_DIR/AGENTS.md" ]; then
+            if ! diff -q "$NEW_AGENTS" "$PROJECT_DIR/AGENTS.md" >/dev/null 2>&1; then
+                cp "$NEW_AGENTS" "$PROJECT_DIR/AGENTS.md"
+                [ "$VERBOSE" = "1" ] && echo "  AGENTS.md updated from archive"
+            fi
+        fi
+
+        # Update sync.sh if newer
+        NEW_SYNC="$EXTRACT_DIR/telegram-hub/sync.sh"
+        if [ -f "$NEW_SYNC" ] && [ -f "$PROJECT_DIR/telegram-hub/sync.sh" ]; then
+            if ! diff -q "$NEW_SYNC" "$PROJECT_DIR/telegram-hub/sync.sh" >/dev/null 2>&1; then
+                cp "$NEW_SYNC" "$PROJECT_DIR/telegram-hub/sync.sh"
+                chmod +x "$PROJECT_DIR/telegram-hub/sync.sh"
+                [ "$VERBOSE" = "1" ] && echo "  sync.sh updated from archive"
+            fi
+        fi
+
+        rm -rf "$EXTRACT_DIR"
+    fi
+fi
+rm -rf "$TCLONE_DIR"
 
 # Cleanup
 rm -rf "$SYNC_DIR"

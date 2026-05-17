@@ -102,72 +102,25 @@ sh -c 'echo "linux"'
 - Если доступен `sh`, НЕТ `powershell` → **server** (Render Linux/Alpine)
 - Если нет ни того, ни другого → **unknown** (работай минимально)
 
-### 4.2 Старт сессии
+### 4.2 Команда «Привет, синхронизируйся»
 
-При приветствии ("Привет", "Hi", "start", "Здравствуй") или команде `/start`:
+При приветствии ("Привет, синхронизируйся", "Hi, sync", "/start", "Здравствуй") — выполни единый протокол:
 
-#### Шаг 1. Чтение контекста
 ```
-Прочитай файлы в следующем порядке:
-1. CONTEXT.md  — контекст проекта
-2. HANDOVER.md — история сессий (последняя — самая актуальная)
-3. USER.md     — профиль пользователя
-```
-
-#### Шаг 2. Синхронизация с GitHub
-```
-Запусти скрипт синхронизации для своей платформы:
-
-Windows (PowerShell):
-  powershell -File telegram-hub\sync.ps1 -Verbose
-
-Linux (сервер Render, Alpine):
-  sh telegram-hub/sync.sh -v
-```
-
-Скрипт:
-1. Клонирует `ninamc4e/my_ai_opencode_server` во временную папку
-2. Сливает HANDOVER.md (append-only: дописывает локальные записи к удалённым)
-3. Копирует CONTEXT.md и USER.md (last-writer-wins: локальная версия если новее)
-4. Пушит изменения обратно в GitHub
-5. Удаляет временную папку
-
-После синхронизации — **перечитай HANDOVER.md, CONTEXT.md, USER.md** (они могли обновиться).
-
-#### Шаг 3. Проверка облачного архива
-```
-Сравни последний коммит в test_opencode с сохранённым в AGENTS.md:
-
-git ls-remote https://github.com/alexsmy/test_opencode.git HEAD
-```
-- Если хеш совпадает с `last_github_commit` в разделе "Последний backup" → архив актуален
-- Если хеш НЕ совпадает → на GitHub есть новый архив:
-  - Спроси: "На GitHub есть более свежий архив. Скачать и продолжить с того места?"
-  - Если да → **Windows:** `restore.ps1 -Latest`, **Linux:** `restore.sh -Latest` (если есть скрипт)
-  - Запиши новый хеш в AGENTS.md
-
-#### Шаг 4. Уведомление
-```
-Отправь уведомление о старте сессии:
-
-Windows:
-  powershell -File telegram-hub\session-start.ps1 -Model "<модель>" -Verbose
-
-Linux (сервер):
-  sh telegram-hub/notify.sh "Сессия запущена. Модель: <модель>"
-```
-
-Уведомление содержит: модель, дату/время, платформу.
-
-#### Шаг 5. Ответ пользователю
-```
-Сообщи пользователю кратко:
-- Сессия запущена
-- Синхронизировано (с платформы)
-- Уведомление отправлено
-
-Пример: "Сессия запущена. Синхронизировался с GitHub (notebook). Уведомление отправлено."
-НЕ пересказывай всю историю — просто продолжай диалог.
+1. Прочитай CONTEXT.md, HANDOVER.md, USER.md
+2. Запусти sync (на своей платформе):
+   Windows: powershell -File telegram-hub\sync.ps1 -Verbose
+   Linux:   sh telegram-hub/sync.sh -v
+3. sync сделает:
+   а) Синхронизирует HANDOVER.md/CONTEXT.md/USER.md с ninamc4e/my_ai_opencode_server
+   б) Проверит test_opencode/migrate/ — найдёт САМЫЙ НОВЫЙ архив
+   в) Если в архиве свежее AGENTS.md или sync.sh — распакует поверх
+   г) Выведет кодовое слово и дату
+4. Перечитай HANDOVER.md, CONTEXT.md, USER.md (они могли обновиться)
+5. Отправь уведомление:
+   Windows: powershell -File telegram-hub\session-start.ps1 -Model "<модель>" -Verbose
+   Linux:   sh telegram-hub/notify.sh "Сессия запущена. Модель: <модель>"
+6. Ответь: "Триедино Синхронизирован. Дата: ..."
 ```
 
 ### 4.3 Работа в сессии
@@ -196,64 +149,28 @@ Linux:
 При словах "синхронизируйся", "sync", "обнови контекст" или команде `/sync`:
 1. Запусти `sync.ps1` или `sync.sh` (по платформе)
 2. Перечитай HANDOVER.md, CONTEXT.md, USER.md
-3. Сообщи: "Обновил контекст из GitHub, продолжаем"
+3. Сообщи: "Триедино Синхронизирован. Дата: ..."
 4. Отправь уведомление в Telegram (если enabled=true)
 
-### 4.4 Завершение сессии
+### 4.4 Команда «Пока, сделай копию в архив»
 
-При прощании ("Пока", "до встречи", "bye", "goodbye", "всё") или команде `/end`:
+При прощании ("Пока, сделай копию в архив", "bye", "goodbye", "/end", "всё") — выполни единый протокол:
 
-#### Шаг 1. Резюме
 ```
-Сформируй краткое резюме: что сделано, какие файлы изменены, текущие статусы задач.
-```
-
-#### Шаг 2. Обновление HANDOVER.md
-```
-Добавь в HANDOVER.md новую секцию:
-
-## Что было сделано в этой сессии (ДД.ММ.ГГГГ)
-
-### Краткое описание
-- Пункт 1
-- Пункт 2
-...
-
-### Изменённые файлы
-- Путь/к/файлу.py
-- Путь/к/файлу.md
-...
-
-### Текущее состояние
-Статус проекта на момент завершения.
-```
-
-**Важно:** HANDOVER.md — append-only. НИЧЕГО не удаляй из предыдущих секций.
-
-#### Шаг 3. Обновление AGENTS.md
-Если появились новые правила, изменилась архитектура или backup ID — обнови.
-
-#### Шаг 4. Уведомление о завершении
-```
-Windows:
-  powershell -File telegram-hub\session-end.ps1 -Summary "<краткий итог>" -Verbose
-
-Linux:
-  sh telegram-hub/notify.sh "Сессия завершена: <краткий итог>"
-```
-
-#### Шаг 5. Синхронизация
-```
-Windows:
-  powershell -File telegram-hub\sync.ps1 -Verbose
-
-Linux:
-  sh telegram-hub/sync.sh -v
-```
-
-#### Шаг 6. Сообщение пользователю
-```
-Сообщи: "HANDOVER.md обновлён, сессия завершена. Увидимся!"
+1. Сформируй краткое резюме: что сделано, какие файлы изменены, статусы
+2. Обнови HANDOVER.md — добавь секцию "Что было сделано в этой сессии (ДД.ММ.ГГГГ)"
+   (append-only: НЕ удаляй предыдущие секции)
+3. Обнови AGENTS.md — если появились новые правила, изменилась архитектура, backup ID
+4. Запусти backup + upload (на любой платформе):
+   Windows: powershell -File telegram-hub\cloud-migrate.ps1 -Verbose
+   (создаёт архив, загружает на Render FileVault, пушит в test_opencode/migrate/)
+5. Запусти sync:
+   Windows: powershell -File telegram-hub\sync.ps1 -Verbose
+   Linux:   sh telegram-hub/sync.sh -v
+6. Отправь уведомление:
+   Windows: powershell -File telegram-hub\session-end.ps1 -Summary "<итог>" -Verbose
+   Linux:   sh telegram-hub/notify.sh "Сессия завершена: <итог>"
+7. Сообщи: "HANDOVER.md обновлён, архив сохранён, сессия завершена. Увидимся!"
 ```
 
 ### 4.5 Миграция на другой ПК
@@ -611,11 +528,11 @@ async def tool_name(param1: str, param2: int = 0) -> str:
 ## 11. Приложение: актуальные ссылки и ID
 
 ### Последний backup
-- **file_id:** 3ebec6d8e142472fa8d457913ecc433e
+- **file_id:** dc7322a7c0014bd5b32c55a1bb3b5b98
 - **дата:** 2026-05-18
-- **url:** https://bot-29-nx0w.onrender.com/files/open/3ebec6d8e142472fa8d457913ecc433e
+- **url:** https://bot-29-nx0w.onrender.com/files/open/dc7322a7c0014bd5b32c55a1bb3b5b98
 - **GitHub:** https://github.com/alexsmy/test_opencode/tree/main/migrate
-- **last_github_commit:** 53cf353
+- **last_github_commit:** e48916f
 
 ### Render сервер
 - **URL:** https://bot-29-nx0w.onrender.com
