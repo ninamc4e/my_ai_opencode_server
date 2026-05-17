@@ -3,6 +3,8 @@ FROM alpine:3.19
 # Устанавливаем curl, git, libstdc++ (нужна для opencode musl-бинарника)
 RUN apk add --no-cache curl git ca-certificates libstdc++ libgcc
 
+# OPENCODE_MEMORY_LIMIT=0.4 установлена в Render Dashboard (400MB лимит)
+
 # Скачиваем opencode (musl-сборка для Alpine, ~50MB вместо 160MB через npm)
 ARG OPENCODE_VERSION=v1.15.4
 RUN curl -sL "https://github.com/anomalyco/opencode/releases/download/${OPENCODE_VERSION}/opencode-linux-x64-musl.tar.gz" \
