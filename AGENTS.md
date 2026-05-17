@@ -1,67 +1,56 @@
 # Правила для AI-агента (серверная версия, Render)
 
 ## Режим работы
-- Я работаю **на сервере Render** (Linux, Docker)
+- Я работаю **на сервере Render** (Linux, Docker) — AI-обработка
 - Пользователь подключается через `opencode attach`
-- Операции с файлами — в `/workspace/`
-- PowerShell скрипты НЕ работают (Linux). Использую bash-аналоги
+- **ВАЖНО:** Bash и инструменты запускаются на локальном ПК пользователя (Windows), не на сервере
+- Команды git, файловые операции — работают с репозиторием на GitHub
 
 ## Роуминг-контекст (единый проект на GitHub)
 
-### Принцип
-Сервер и локальный ПК работают с ОДНИМ репозиторием `ninamc4e/my_ai_opencode_server`. 
+Сервер и локальный ПК работают с ОДНИМ репозиторием `ninamc4e/my_ai_opencode_server`.
 HANDOVER.md — журнал, который пушится на GitHub при завершении сессии и пуллится при старте.
 
 ### Старт сессии
 При подключении пользователя ("Привет", "Hi", "/start"):
 1. Прочитай CONTEXT.md и HANDOVER.md
 2. Определи модель ИИ (из системного контекста)
-3. Выполни `git pull origin main` — подтяни HANDOVER.md и другие файлы
-4. Сообщи пользователю, что сессия запущена
+3. Выполни `git pull origin main` на сервере (через инструкции пользователю)
+4. Отправь уведомление в Telegram через локальный notify.ps1
+5. Сообщи пользователю, что сессия запущена
 
 ### Завершение сессии
 При прощании ("Пока", "до встречи", "bye", "/end"):
 1. Сформируй краткое резюме сессии
-2. Обнови HANDOVER.md — добавь секцию "Что было сделано в этой сессии"
-3. Обнови AGENTS.md если нужно
-4. Закоммитить и запушить в GitHub:
-   ```
-   git add HANDOVER.md AGENTS.md
-   git commit -m "сессия: краткое описание"
-   git push origin main
-   ```
-5. Сообщи пользователю, что HANDOVER.md обновлён и запущен
+2. Уведоми пользователя о завершении через Telegram
+3. Попроси пользователя запушить HANDOVER.md, обновлённый на сервере
 
-### Важно
-- **НИКОГДА не пушить** без явного подтверждения пользователя, кроме HANDOVER.md и AGENTS.md при завершении сессии
-- При пуше HANDOVER.md — только этот файл и AGENTS.md, НЕ конфиги с секретами
-- При конфликте git pull — предупреди пользователя
+## Telegram-уведомления
 
-## Telegram-hub (адаптировано для Linux)
+### Как отправлять
+Так как bash-инструменты запускаются на локальном ПК пользователя (Windows), для уведомлений используй notify.ps1 из my_best_work:
 
-### Уведомления
-- Скрипты в `telegram-hub/` — PowerShell, на сервере не работают
-- Для отправки уведомлений с сервера использую curl напрямую
-- `notify.ps1` заменяется `notify.sh` (или прямым curl)
-
-### curl-версия notify для Linux:
-```bash
-curl -s -X POST "https://bot-29-nx0w.onrender.com/mytelegram" \
-  -H "Content-Type: application/json; charset=utf-8" \
-  -H "X-Telegram-Tunnel-Secret: $TELEGRAM_TUNNEL_SECRET" \
-  -d "$(echo '{"text":"сообщение"}' | iconv -t utf-8)"
+```powershell
+powershell -File C:\Users\alexs\.opencode\my_best_work\telegram-hub\notify.ps1 -Message "<b>текст</b>"
 ```
 
-### Telegram-конфиги
-- `telegram-route.json` — режим, endpoint, secret_env
-- `telegram-notify.json` — вкл/выкл, уровень
+### Когда отправлять
+- При старте сессии ("Привет", "/start") — без запроса пользователя
+- При завершении сессии ("Пока", "/end") — без запроса пользователя
+- После выполнения задач — если enabled=true и level=all в telegram-notify.json
+
+## Git на сервере
+- Контейнер при старте клонирует репозиторий в /workspace
+- start.sh выполняет git pull при каждом запуске
+- Для коммита с сервера — использовать git внутри контейнера:
+  ```
+  cd /workspace && git add HANDOVER.md && git commit -m "..." && git push origin main
+  ```
 
 ## Модель
 - По умолчанию: `opencode/deepseek-v4-flash-free` (через Zen)
 - Можно переключать через `/models` в TUI или естественным языком
-- Все модели через Zen API (не нужны отдельные API ключи)
 
 ## Backup / Restore
-- Скрипты в `SCRIPTs/` — PowerShell, на сервере не запускаются
-- Для бекапа на сервере использую git push (все файлы уже в GitHub)
-- Команда `/backup` на сервере = git add + git commit + git push
+- Скрипты в `SCRIPTs/` — PowerShell, на локальной машине
+- Для бекапа с сервера: git push (все файлы уже в GitHub)
