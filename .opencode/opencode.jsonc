@@ -1,0 +1,57 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+
+  "instructions": ["../CONTEXT.md", "../AGENTS.md"],
+
+  "skills": {
+    "paths": [".opencode/skills"]
+  },
+
+  "mcp": {
+    "weather_agents": {
+      "type": "remote",
+      "url": "https://bot-29-nx0w.onrender.com/mcp",
+      "headers": {
+        "x-agents-tunnel-secret": "{env:AGENTS_TUNNEL_SECRET}"
+      },
+      "enabled": true
+    },
+    "mcp_everything": {
+      "type": "local",
+      "command": ["npx", "-y", "@modelcontextprotocol/server-everything"],
+      "enabled": false
+    },
+    "mcp_sequential_thinking": {
+      "type": "local",
+      "command": ["npx", "-y", "@modelcontextprotocol/server-sequential-thinking"],
+      "enabled": false
+    }
+  },
+
+  "command": {
+    "start": {
+      "template": "Новая сессия. Выполни: 1) Прочитай CONTEXT.md и HANDOVER.md в корне проекта. 2) Определи свою модель ИИ (из системного контекста). 3) Запусти powershell -File telegram-hub\\session-start.ps1 -Model \"<твоя модель>\" -Verbose. 4) Сообщи пользователю, что сессия запущена и уведомление отправлено.",
+      "description": "Старт сессии: загрузка контекста + приветственное уведомление в Telegram"
+    },
+    "tg": {
+      "template": "Получена команда /tg. Аргументы: {{input}}. Прочитай telegram-notify.json (enabled, level) и telegram-route.json (mode). Выполни команду: on → enabled=true; off → enabled=false; status → покажи enabled+level+mode; 'on all' → enabled=true, level=all; 'on errors' → enabled=true, level=errors. Сохрани только telegram-notify.json, не трогай telegram-route.json и telegram-config.json. Сообщи результат.",
+      "description": "Telegram уведомления: /tg on — включить, /tg off — выключить, /tg status — статус, /tg on all — обо всём, /tg on errors — только ошибки. Режим отправки (server/local) задаётся в telegram-route.json."
+    },
+    "backup": {
+      "template": "Получена команда /backup. Аргументы: {{input}}. Если аргумент 'upload' — загрузить на Render. Выполни: 1) Скопируй папку my_best_work в агентский FileVault-туннель: запусти powershell -File SCRIPTs\\backup.ps1 -Upload -Verbose. 2) Прочитай вывод — там будет file_id. 3) Сообщи пользователю file_id и URL. 4) Запиши file_id в AGENTS.md (раздел Backup). 5) Отправь уведомление в Telegram.",
+      "description": "Бэкап: упаковать my_best_work в zip и выгрузить на Render FileVault. /backup upload — с загрузкой, /backup — только локальный архив."
+    },
+    "end": {
+      "template": "Завершение сессии. Выполни: 1) Сформируй краткое резюме: что было сделано, какие файлы изменены, текущее состояние. 2) Обнови HANDOVER.md — добавь секцию 'Что было сделано в этой сессии' с датой и итогами. 3) Обнови AGENTS.md — если появились новые правила. 4) Запусти powershell -File telegram-hub\\session-end.ps1 -Summary \"<краткий итог>\" -Verbose. 5) Сообщи пользователю, что HANDOVER.md обновлён и сессия завершена.",
+      "description": "Завершение сессии: обновление HANDOVER.md + уведомление в Telegram"
+    },
+    "migrate": {
+      "template": "Миграция на другой ПК. Выполни: 1) Обнови HANDOVER.md — полное резюме всей работы, текущее состояние. 2) Обнови AGENTS.md — запиши последний file_id backup. 3) Запусти powershell -File telegram-hub\\cloud-migrate.ps1 -Verbose. 4) Скрипт создаст архив, загрузит на Render FileVault, отправит уведомление. 5) Сообщи пользователю file_id и URL для восстановления.",
+      "description": "Миграция: HANDOVER + бэкап + загрузка на Render FileVault"
+    },
+    "cloud-restore": {
+      "template": "Восстановление облачного контекста. Выполни: 1) Проверь наличие HANDOVER.md и CONTEXT.md. 2) Если нет или пустые — запроси GET https://bot-29-nx0w.onrender.com/api/agents/responses для поиска последнего backup. 3) Запусти powershell -File SCRIPTs\\restore.ps1 -FileId <file_id>. 4) Загрузи контекст из восстановленных файлов. 5) Сообщи пользователю, что контекст восстановлен.",
+      "description": "Восстановление: скачать бэкап с Render и распаковать"
+    }
+  }
+}

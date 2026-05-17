@@ -1,0 +1,12 @@
+{
+  "mode": "server",
+  "server": {
+    "endpoint": "https://bot-29-nx0w.onrender.com/mytelegram",
+    "secret_env": "TELEGRAM_TUNNEL_SECRET",
+    "timeout_seconds": 10,
+    "format": "html"
+  },
+  "local": {
+    "browser_timeout_seconds": 5
+  }
+}
