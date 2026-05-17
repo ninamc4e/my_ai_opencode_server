@@ -1,24 +1,22 @@
-FROM alpine:3.19
+FROM node:20-bookworm-slim
 
-# Устанавливаем curl, git (alpine пакеты очень лёгкие)
-RUN apk add --no-cache curl git ca-certificates && \
-    rm -rf /var/cache/apk/*
-
-# Скачиваем opencode (musl-сборка для Alpine)
-ARG OPENCODE_VERSION=v1.15.4
-RUN curl -sL "https://github.com/anomalyco/opencode/releases/download/${OPENCODE_VERSION}/opencode-linux-x64-musl.tar.gz" \
-    | tar xz -C /usr/local/bin/ opencode
+# Устанавливаем opencode, git и curl
+RUN npm install -g opencode-ai && \
+    apt-get update -qq && apt-get install -y -qq git curl && \
+    rm -rf /var/lib/apt/lists/*
 
 # Конфигурация
 COPY opencode.json /etc/opencode/config.json
 
-EXPOSE 10000
+ENTRYPOINT []
 
-# Старт: клонируем проект → запускаем opencode serve
+# Старт: клонируем/обновляем проект → запускаем opencode serve с логами
 CMD ["/bin/sh", "-c", "\
 echo '=== Opencode Server Startup ===' && \
+echo 'Git config...' && \
 git config --global user.name 'opencode-server' && \
 git config --global user.email 'server@opencode' && \
+echo 'Cloning/pulling repository...' && \
 if [ -n \"$GITHUB_TOKEN\" ]; then \
   git clone https://ninamc4e:${GITHUB_TOKEN}@github.com/ninamc4e/my_ai_opencode_server.git /workspace 2>&1 || \
   (cd /workspace && git pull origin main 2>&1); \
