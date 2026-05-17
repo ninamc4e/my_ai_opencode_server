@@ -31,25 +31,35 @@
 При приветствии пользователя ("Привет", "Hi", "start") или команде `/start`:
 1. Прочитай `CONTEXT.md` и `HANDOVER.md` в корне проекта
 2. Определи свою модель ИИ (из системного контекста, например "deepseek-v4-flash-free")
-3. **Проверь облачный архив** — сравни с последним коммитом на GitHub:
+3. **Синхронизируйся с GitHub** — запусти скрипт синхронизации, если доступен:
+   - Если есть `powershell`: `powershell -File telegram-hub\sync.ps1 -Verbose`
+   - Если есть `sh` (Linux, Alpine): `sh telegram-hub/sync.sh -v`
+   - После синхронизации перечитай `HANDOVER.md`, `CONTEXT.md`, `USER.md`
+4. **Проверь облачный архив** — сравни с последним коммитом на GitHub:
    ```
    git ls-remote https://github.com/alexsmy/test_opencode.git HEAD
    ```
    - Если хеш отличается от `last_github_commit` в AGENTS.md → на сервере есть новые данные
    - Спроси пользователя: «На GitHub есть более свежий архив. Скачать и продолжить с того места?»
-   - Если да → запусти `restore.ps1 -Latest`, перечитай восстановленные `CONTEXT.md` и `HANDOVER.md`
+   - Если да → на Windows запусти `restore.ps1 -Latest`, на Linux `restore.sh -Latest` (если есть)
    - Запиши новый хеш коммита в AGENTS.md
-4. Запусти `powershell -File telegram-hub\session-start.ps1 -Model "<модель>" -Verbose`
-5. Скрипт сам сформирует и отправит уведомление с: версией opencode, темой последней сессии, моделью, датой/временем
-6. Сообщи пользователю, что сессия запущена и уведомление отправлено
+5. Запусти уведомление (если возможно):
+   - На Windows: `powershell -File telegram-hub\session-start.ps1 -Model "<модель>" -Verbose`
+   - На Linux (сервер): `sh telegram-hub/notify.sh "Сессия запущена. Модель: <модель>"`
+6. Сообщи пользователю, что сессия запущена, синхронизирована и уведомление отправлено
 
 ### Завершение сессии
 При прощании пользователя ("Пока", "до встречи", "bye", "goodbye") или команде `/end`:
 1. Сформируй краткое резюме сессии: что было сделано, какие файлы изменены, текущее состояние
 2. Обнови `HANDOVER.md` — добавь секцию "Что было сделано в этой сессии" с датой и итогами
 3. Обнови `AGENTS.md` — если появились новые правила или изменения
-4. Запусти `powershell -File telegram-hub\session-end.ps1 -Summary "<краткий итог>" -Verbose`
-5. Сообщи пользователю, что HANDOVER.md обновлён и сессия завершена
+4. Запусти скрипт уведомления:
+   - На Windows: `powershell -File telegram-hub\session-end.ps1 -Summary "<краткий итог>" -Verbose`
+   - На Linux (сервер): `sh telegram-hub/notify.sh "Сессия завершена: <краткий итог>"`
+5. Выполни синхронизацию:
+   - На Windows: `powershell -File telegram-hub\sync.ps1 -Verbose`
+   - На Linux: `sh telegram-hub/sync.sh -v`
+6. Сообщи пользователю, что HANDOVER.md обновлён и сессия завершена
 
 ### Миграция на другой ПК / другой opencode
 При запросе пользователя ("Новый компьютер", "переходим на другой opencode", "перенос", "миграция") или команде `/migrate`:
@@ -303,11 +313,11 @@ FileVault (data/filevault_uploads/)
 - Переменные окружения (`AGENTS_TUNNEL_SECRET`) — **в зашифрованном виде в архиве**, НЕ ставятся вручную
 
 ### Последний backup
-- file_id: 55bdd327ed7a4652a76cb8858c732fed
-- дата: 2026-05-17
-- url: https://bot-29-nx0w.onrender.com/files/open/55bdd327ed7a4652a76cb8858c732fed
+- file_id: 1aa908bf550a45109a7e9861f900d032
+- дата: 2026-05-18
+- url: https://bot-29-nx0w.onrender.com/files/open/1aa908bf550a45109a7e9861f900d032
 - GitHub: https://github.com/alexsmy/test_opencode/tree/main/migrate
-- last_github_commit: e5b2995
+- last_github_commit: 2d61e29
 
 ## Sync System — триединство (ноутбук / другой ПК / сервер)
 
