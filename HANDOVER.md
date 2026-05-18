@@ -327,8 +327,8 @@ Telegram → bot → Render (listener) → data/telegram_inbox/ → API → open
 - Скачан и распакован архив с Render FileVault: `file_id=af3e6583cd594b7f864590d5478869cb`
 - Локальная папка `my_best_work` приведена в соответствие с сессией от 12:26 (other-pc)
 - **Добавлены файлы** (с other-pc):
-  - `telegram-hub/duplex_poll.py` — duplex polling на Python
-  - `telegram-hub/duplex_poll.ps1` — duplex polling на PowerShell
+  - `telegram-hub/duplex_poll.py` — duplex polling на Python (переписан)
+  - `telegram-hub/duplex_poll.ps1` — duplex polling на PowerShell (сохранён)
   - `agents-hub/mcp_tools_examples/upload_tool.py` — загрузка MCP-тулов через Python
   - `agents-hub/mcp_tools_examples/send_telegram_message.py` — MCP-тул Telegram
   - `agents-hub/mcp_tools_examples/send_telegram_message_v2.py` — MCP-тул Telegram v2
@@ -336,6 +336,20 @@ Telegram → bot → Render (listener) → data/telegram_inbox/ → API → open
   - `test_media_types.py` — тест media-типов
 - **AGENTS.md** обновлён: секция 12 (Duplex) добавлена, file_id обновлён
 - Уведомление отправлено в Telegram
+
+### Duplex — разработка и тестирование (18.05.2026, 14:55)
+- **`duplex_poll.py` переписан** — новая архитектура:
+  - Режим `direct`: прямой Telegram Bot API (`getUpdates`), long polling
+  - Режим `render`: через Render inbox API (fallback при недоступности прямого API)
+  - Автоопределение режима при старте
+  - Offset tracking (`data/duplex_pending_offset.txt`)
+- **Тестирование duplex (успешно):**
+  - 13:01 MSK — пользователь написал боту → Render inbox получил
+  - AI прочитал через inbox API → ACK → ответил в Telegram и здесь
+  - 13:03 MSK — `duplex_poll.py` (render mode) автоматически подхватил и записал в `data/duplex_pending.json`
+  - `12345-54321` — тестовое сообщение прошло весь путь
+- **Известная проблема:** русский текст кракозябрится на стороне Render listener (кодировка), латиница и цифры — идеально
+- **AGENTS.md обновлён** — новая архитектура duplex (раздел 12)
 
 ## Полезные ссылки
 - GitHub: https://github.com/alexsmy/bot_29/tree/mcp_agent_import
